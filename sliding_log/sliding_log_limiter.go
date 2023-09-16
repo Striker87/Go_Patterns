@@ -6,6 +6,7 @@ import (
 )
 
 // Ограничиваем кол-во запросов в interval (например в одну сек) сохраняет в журнале время когда обращались к лимитеру
+// потребляет много памяти
 type SlidingLogLimiter struct {
 	limit    int
 	interval time.Duration
