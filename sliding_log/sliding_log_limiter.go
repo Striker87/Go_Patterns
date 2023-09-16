@@ -22,7 +22,7 @@ func NewSlidingLogLimiter(limit int, interval time.Duration) *SlidingLogLimiter 
 	}
 }
 
-func (l *SlidingLogLimiter) allow() bool {
+func (l *SlidingLogLimiter) Allow() bool {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
