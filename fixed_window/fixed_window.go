@@ -7,13 +7,12 @@ import (
 )
 
 // Ограничиваем кол-во запросов в interval (например в одну сек)
-
 type FixedWindowLimiter struct {
 	count int32
-	limit int
+	limit int32
 }
 
-func NewFixedWindowLimiter(ctx context.Context, limit int, interval time.Duration) *FixedWindowLimiter {
+func NewFixedWindowLimiter(ctx context.Context, limit int32, interval time.Duration) *FixedWindowLimiter {
 	limiter := &FixedWindowLimiter{
 		count: 0,
 		limit: limit,
@@ -40,7 +39,7 @@ func (l *FixedWindowLimiter) startPeriodicCountRefresh(ctx context.Context, inte
 
 func (l *FixedWindowLimiter) Allow() bool { // проверяем исчерпан лимит запросов или нет
 	count := atomic.LoadInt32(&l.count)
-	if count > int32(l.limit) {
+	if count > l.limit {
 		return false
 	}
 
@@ -48,5 +47,5 @@ func (l *FixedWindowLimiter) Allow() bool { // проверяем исчерпа
 		count = atomic.LoadInt32(&l.count)
 	}
 
-	return count < int32(l.limit)
+	return count < l.limit
 }
