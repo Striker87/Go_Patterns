@@ -14,7 +14,6 @@ func main() {
 		data = append(data, i+10)
 	}
 
-	//results := make([]int, dataSize)
 	semaphore := make(chan int, dataSize)
 
 	fmt.Printf("Before: %v\n", data)
