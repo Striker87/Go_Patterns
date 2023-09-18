@@ -14,24 +14,22 @@ func main() {
 		data = append(data, i+10)
 	}
 
-	results := make([]int, dataSize)
-	semaphore := make(chan struct{}, dataSize)
+	//results := make([]int, dataSize)
+	semaphore := make(chan int, dataSize)
 
 	fmt.Printf("Before: %v\n", data)
 	start := time.Now()
 
 	for i, xi := range data {
 		go func(i int, xi int) {
-			results[i] = calculate(xi)
-			semaphore <- struct{}{}
+			semaphore <- calculate(xi)
 		}(i, xi)
 	}
 
 	for i := 0; i < dataSize; i++ {
-		<-semaphore
+		fmt.Printf("calculation completed: %d\n", <-semaphore)
 	}
 
-	fmt.Printf("After: %v\n", results)
 	fmt.Printf("Elapsed: %s\n", time.Since(start))
 }
 
