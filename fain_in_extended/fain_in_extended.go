@@ -8,6 +8,7 @@ import (
 
 // комбинирует несколько входов в один выходной канал (мультиплексируем канал)
 // порядок вывода не гарантируется
+// fain in с несколькими выходами
 
 type payload struct {
 	name  string
@@ -37,26 +38,24 @@ func producer(name string, done <-chan struct{}, wg *sync.WaitGroup) <-chan payl
 			}
 		}
 	}()
-
 	return ch
 }
 
-func consumer(channels []<-chan payload, done <-chan struct{}, wg *sync.WaitGroup, fanIn chan<- payload) {
+func consumer(name string, channels []<-chan payload, done <-chan struct{}, wg *sync.WaitGroup, fanIn chan<- payload) {
 	for i, ch := range channels {
 		i := i + 1
 		ch := ch
 
 		go func() {
 			defer wg.Done()
-
-			fmt.Println("started consume of producer", i)
+			fmt.Println("started consumer", name, i)
 			for {
 				select {
 				case <-done:
-					fmt.Println("consume of producer", i, "completed")
+					fmt.Printf("consumer %s %d completed\n", name, i)
 					return
 				case v := <-ch:
-					fmt.Println("consumer of producer", i, "got value", v.value, "from", v.name)
+					fmt.Printf("consumer %s %d got value %d from %s", name, i, v.value, v.name)
 					fanIn <- v
 				}
 			}
@@ -66,32 +65,45 @@ func consumer(channels []<-chan payload, done <-chan struct{}, wg *sync.WaitGrou
 
 func main() {
 	done := make(chan struct{})
-	wg := sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 
-	wg.Add(2)
-	producers := make([]<-chan payload, 0, 2)
-	producers = append(producers, producer("Alice", done, &wg))
-	producers = append(producers, producer("Jack", done, &wg))
+	wg.Add(3)
+	producers := make([]<-chan payload, 0, 3)
+	producers = append(producers, producer("Alice", done, wg))
+	producers = append(producers, producer("Jack", done, wg))
+	producers = append(producers, producer("Bob", done, wg))
 
-	fanIn := make(chan payload)
+	fanIn1 := make(chan payload)
+	fanIn2 := make(chan payload)
 
-	wg.Add(2)
-	consumer(producers, done, &wg, fanIn)
+	wg.Add(3)
+	consumer("C1", producers, done, wg, fanIn1)
+
+	wg.Add(3)
+	consumer("C2", producers, done, wg, fanIn2)
 
 	go func() {
+		f1Done := false
+		f2Done := false
+
 		for {
-			fanInDone := false
 			select {
 			case <-done:
-				if !fanInDone {
+				if f1Done && f2Done {
+					return
+				}
+			case v, ok := <-fanIn1:
+				if !ok {
+					f1Done = true
 					continue
 				}
-				return
-			case v, ok := <-fanIn:
+				fmt.Printf("fanIn1 got %v\n", v)
+			case v, ok := <-fanIn2:
 				if !ok {
-					fanInDone = true
+					f2Done = true
+					continue
 				}
-				fmt.Printf("fanIn got %v\n", v)
+				fmt.Printf("fanIn2 got %v\n", v)
 			}
 		}
 	}()
