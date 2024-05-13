@@ -14,10 +14,10 @@ const (
 )
 
 func main() {
-	data := make([]int, 0, dataSize)
+	data := make([]int, dataSize)
 
 	for i := 0; i < dataSize; i++ {
-		data = append(data, i+1)
+		data[i] = i + 1
 	}
 
 	semaphore := make(chan struct{}, semaphoreLimit)
