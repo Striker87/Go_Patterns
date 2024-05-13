@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// https://www.youtube.com/watch?v=w4suQQtnYmY
 // Ограничиваем кол-во запросов в interval (например в одну сек)
 type FixedWindowLimiter struct {
 	count int32
